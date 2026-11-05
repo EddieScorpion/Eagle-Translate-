@@ -1,0 +1,1709 @@
+<!DOCTYPE html>
+<html lang="zh-TW" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eagle Translate 鷹眼翻譯</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- PDF.js CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <!-- Tesseract OCR CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+
+    <style>
+        /* Modern Font and smooth theme transitions */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        /* Light Theme (Soft Pastel Green) */
+        .theme-light {
+            background-color: #EAF5EC;
+            color: #1B4332;
+        }
+        .theme-light .card-bg {
+            background-color: #FFFFFF;
+            border-color: #C8E6C9;
+        }
+        .theme-light .input-bg {
+            background-color: #F4FBF6;
+            color: #1B4332;
+        }
+        .theme-light .btn-primary {
+            background-color: #2D6A4F;
+            color: #FFFFFF;
+        }
+        .theme-light .btn-primary:hover {
+            background-color: #1B4332;
+        }
+
+        /* Cactus Green / Eye Care Theme */
+        .theme-cactus {
+            background-color: #2D5A27;
+            color: #E2F1E1;
+        }
+        .theme-cactus .card-bg {
+            background-color: #1E3F1A;
+            border-color: #3B7A57;
+        }
+        .theme-cactus .input-bg {
+            background-color: #24481F;
+            color: #E2F1E1;
+        }
+        .theme-cactus .btn-primary {
+            background-color: #3B7A57;
+            color: #FFFFFF;
+        }
+        .theme-cactus .btn-primary:hover {
+            background-color: #1E3F1A;
+        }
+
+        /* Dark Theme (Glassmorphism & Circular Radial Gradients) */
+        .theme-dark {
+            background-color: #09120c;
+            background-image: 
+                radial-gradient(circle at 15% 15%, rgba(45, 106, 79, 0.45) 0%, transparent 45%),
+                radial-gradient(circle at 85% 20%, rgba(16, 185, 129, 0.25) 0%, transparent 40%),
+                radial-gradient(circle at 50% 75%, rgba(5, 150, 105, 0.35) 0%, transparent 50%),
+                radial-gradient(circle at 85% 85%, rgba(20, 83, 45, 0.45) 0%, transparent 35%),
+                radial-gradient(circle at 18% 85%, rgba(15, 23, 42, 0.7) 0%, transparent 45%);
+            background-attachment: fixed;
+            color: #E2E8F0;
+        }
+        .theme-dark .card-bg {
+            background-color: rgba(20, 38, 28, 0.55);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-color: rgba(52, 211, 153, 0.25);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4), inset 0 1px 0 0 rgba(255, 255, 255, 0.1);
+        }
+        .theme-dark .input-bg {
+            background-color: rgba(10, 22, 16, 0.5);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            color: #E2E8F0;
+            border-color: rgba(52, 211, 153, 0.2);
+        }
+        .theme-dark .btn-primary {
+            background: linear-gradient(135deg, rgba(45, 106, 79, 0.9), rgba(27, 67, 50, 0.9));
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(52, 211, 153, 0.3);
+            color: #FFFFFF;
+        }
+        .theme-dark .btn-primary:hover {
+            background: linear-gradient(135deg, rgba(64, 145, 108, 0.95), rgba(45, 106, 79, 0.95));
+            border-color: rgba(52, 211, 153, 0.5);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.05);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(45, 106, 79, 0.3);
+            border-radius: 3px;
+        }
+
+        /* Toast Animation */
+        @keyframes fadeInOut {
+            0% { opacity: 0; transform: translateY(20px); }
+            15% { opacity: 1; transform: translateY(0); }
+            85% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(-20px); }
+        }
+        .toast-animate {
+            animation: fadeInOut 2.5s forwards;
+        }
+    </style>
+</head>
+<body class="theme-light min-h-full flex flex-col justify-between selection:bg-green-200 selection:text-green-900">
+
+    <!-- Top Bar & Header Section -->
+    <header class="w-full pt-4 pb-3 px-4 text-center border-b border-green-200/50 shadow-sm relative transition-colors duration-300">
+        <!-- Live Clock Display (Strict 3-Tier Hierarchy) -->
+        <div class="max-w-4xl mx-auto flex flex-col items-center justify-center">
+            <!-- 1. Chinese Date & Time (LARGEST) -->
+            <div id="clockChinese" class="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-wide text-emerald-800 dark:text-emerald-300 transition-all">
+                --年--月--日 --:--:--
+            </div>
+            
+            <!-- 2. Website Title (SECOND LARGEST) -->
+            <h1 class="text-xl sm:text-2xl font-bold my-1 flex items-center justify-center gap-2 tracking-tight">
+                <i class="fa-solid fa-feather-pointed text-emerald-600"></i>
+                <span>Eagle Translate 鷹眼翻譯</span>
+            </h1>
+
+            <!-- 3. English Date & Time (SMALLEST) -->
+            <div id="clockEnglish" class="text-xs sm:text-sm font-medium opacity-80 tracking-wider">
+                -- -------- ---- --:--:--
+            </div>
+
+            <!-- Eye-Care Status Badge -->
+            <div class="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-600/10 dark:bg-emerald-400/10 text-emerald-800 dark:text-emerald-300 text-xs font-semibold cursor-pointer hover:bg-emerald-600/20 transition" onclick="trigger3SecondEyeCareNotice()" title="點擊測試護眼提醒彈窗 (預設每 5 分鐘觸發)">
+                <i class="fa-solid fa-eye text-emerald-600 dark:text-emerald-400 animate-pulse"></i>
+                <span>護眼倒數：<span id="eyeCareBadge">05:00</span></span>
+            </div>
+        </div>
+
+        <!-- Mobile Menu Trigger Button (☰) Top Right -->
+        <button id="mobileMenuBtn" onclick="toggleMobileMenu()" class="md:hidden absolute right-4 top-5 p-2 rounded-lg text-xl hover:bg-emerald-500/10 focus:outline-none" aria-label="選單">
+            <i class="fa-solid fa-bars"></i>
+        </button>
+    </header>
+
+    <!-- Mobile Navigation Drawer -->
+    <div id="mobileMenu" class="hidden md:hidden border-b border-emerald-500/20 px-4 py-3 bg-emerald-900/10 backdrop-blur-md">
+        <div class="grid grid-cols-2 gap-2 text-sm">
+            <button onclick="triggerCamera(); toggleMobileMenu();" class="p-2.5 rounded-lg bg-emerald-600/10 hover:bg-emerald-600/20 text-left font-medium flex items-center gap-2">
+                <i class="fa-solid fa-camera text-emerald-600"></i> 拍照辨識
+            </button>
+            <button onclick="triggerPDFUpload(); toggleMobileMenu();" class="p-2.5 rounded-lg bg-emerald-600/10 hover:bg-emerald-600/20 text-left font-medium flex items-center gap-2">
+                <i class="fa-solid fa-file-pdf text-red-500"></i> 上傳 PDF
+            </button>
+            <button onclick="triggerImageUpload(); toggleMobileMenu();" class="p-2.5 rounded-lg bg-emerald-600/10 hover:bg-emerald-600/20 text-left font-medium flex items-center gap-2">
+                <i class="fa-solid fa-image text-blue-500"></i> 圖片上傳
+            </button>
+            <button onclick="openHistoryModal(); toggleMobileMenu();" class="p-2.5 rounded-lg bg-emerald-600/10 hover:bg-emerald-600/20 text-left font-medium flex items-center gap-2">
+                <i class="fa-solid fa-clock-rotate-left text-amber-500"></i> 歷史紀錄
+            </button>
+            <button onclick="openVaultModal(); toggleMobileMenu();" class="p-2.5 rounded-lg bg-emerald-600/10 hover:bg-emerald-600/20 text-left font-medium flex items-center gap-2">
+                <i class="fa-solid fa-folder-closed text-yellow-600"></i> 儲存倉庫
+            </button>
+            <button onclick="cycleTheme(); toggleMobileMenu();" class="p-2.5 rounded-lg bg-emerald-600/10 hover:bg-emerald-600/20 text-left font-medium flex items-center gap-2">
+                <i class="fa-solid fa-circle-half-stroke text-purple-500"></i> 切換主題
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Application Container -->
+    <main class="max-w-6xl w-full mx-auto p-4 sm:p-6 flex-grow flex flex-col gap-6">
+        
+        <!-- Desktop Toolbar Controls -->
+        <div class="hidden md:flex flex-wrap items-center justify-between gap-3 p-3 rounded-2xl card-bg border shadow-sm">
+            <div class="flex items-center gap-2">
+                <button onclick="triggerCamera()" class="px-3.5 py-2 rounded-xl text-sm font-medium bg-emerald-600/10 hover:bg-emerald-600/20 transition flex items-center gap-2">
+                    <i class="fa-solid fa-camera text-emerald-600"></i> 拍照辨識
+                </button>
+                <button onclick="triggerPDFUpload()" class="px-3.5 py-2 rounded-xl text-sm font-medium bg-red-500/10 hover:bg-red-500/20 transition flex items-center gap-2">
+                    <i class="fa-solid fa-file-pdf text-red-500"></i> 上傳 PDF
+                </button>
+                <button onclick="triggerImageUpload()" class="px-3.5 py-2 rounded-xl text-sm font-medium bg-blue-500/10 hover:bg-blue-500/20 transition flex items-center gap-2">
+                    <i class="fa-solid fa-image text-blue-500"></i> 圖片上傳
+                </button>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <button onclick="openHistoryModal()" class="px-3.5 py-2 rounded-xl text-sm font-medium bg-amber-500/10 hover:bg-amber-500/20 transition flex items-center gap-2">
+                    <i class="fa-solid fa-clock-rotate-left text-amber-600"></i> 歷史紀錄
+                </button>
+                <button onclick="openVaultModal()" class="px-3.5 py-2 rounded-xl text-sm font-medium bg-yellow-500/10 hover:bg-yellow-500/20 transition flex items-center gap-2">
+                    <i class="fa-solid fa-box-archive text-yellow-600"></i> 倉庫管理
+                </button>
+                <button onclick="cycleTheme()" class="px-3.5 py-2 rounded-xl text-sm font-medium bg-purple-500/10 hover:bg-purple-500/20 transition flex items-center gap-2" title="切換主題 (淺色 / 護眼配色 / 深色)">
+                    <i class="fa-solid fa-palette text-purple-600"></i> <span id="themeBtnText">淺色模式</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Hidden File Inputs -->
+        <input type="file" id="pdfInput" accept="application/pdf" class="hidden" onchange="handlePDFUpload(event)">
+        <input type="file" id="imageInput" accept="image/*" class="hidden" onchange="handleImageUpload(event)">
+        <input type="file" id="cameraInput" accept="image/*" capture="environment" class="hidden" onchange="handleImageUpload(event)">
+
+        <!-- Language Selector & Switcher Bar -->
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-3 p-3 rounded-2xl card-bg border shadow-sm">
+            <!-- Source Language -->
+            <div class="w-full sm:w-5/12 flex items-center gap-2">
+                <span class="text-xs font-semibold uppercase tracking-wider opacity-70">來源:</span>
+                <select id="sourceLang" class="w-full p-2.5 rounded-xl input-bg border border-emerald-500/20 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                    <option value="auto">Auto Detect (自動偵測語言)</option>
+                    <option value="zh">中文 (Chinese)</option>
+                    <option value="en">英文 (English)</option>
+                    <option value="ja">日文 (日本語)</option>
+                    <option value="fr">法文 (Français)</option>
+                    <option value="ar">阿拉伯文 (العربية)</option>
+                    <option value="sv">瑞典文 (Svenska)</option>
+                    <option value="it">義大利文 (Italiano)</option>
+                    <option value="es">西班牙文 (Español)</option>
+                    <option value="mi">毛利文 (Te Reo Māori)</option>
+                </select>
+            </div>
+
+            <!-- Swap Button -->
+            <button onclick="swapLanguages()" class="p-2.5 rounded-full bg-emerald-600 text-white hover:bg-emerald-700 transition shadow-md hover:rotate-180 duration-300" title="切換源語言與目標語言">
+                <i class="fa-solid fa-arrows-rotate text-sm"></i>
+            </button>
+
+            <!-- Target Language & Modes -->
+            <div class="w-full sm:w-5/12 flex items-center gap-2">
+                <span class="text-xs font-semibold uppercase tracking-wider opacity-70">目標:</span>
+                <select id="targetLang" onchange="handleTargetLangChange()" class="w-full p-2.5 rounded-xl input-bg border border-emerald-500/20 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                    <option value="zh-TW-bj">中文繁體（北京話用語）</option>
+                    <option value="en" selected>英文 (English)</option>
+                    <option value="ja">日文 (日本語)</option>
+                    <option value="fr">法文 (Français)</option>
+                    <option value="ar">阿拉伯文 (العربية)</option>
+                    <option value="sv">瑞典文 (Svenska)</option>
+                    <option value="it">義大利文 (Italiano)</option>
+                    <option value="es">西班牙文 (Español)</option>
+                    <option value="mi">毛利文 (Te Reo Māori)</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Translation Dual Workspace Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 flex-grow">
+            
+            <!-- Source Input Box -->
+            <div class="flex flex-col rounded-2xl card-bg border p-4 shadow-sm relative group">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs font-bold tracking-wider opacity-70 flex items-center gap-1.5">
+                        <i class="fa-solid fa-pen-to-square text-emerald-600"></i> 原文 (Source)
+                    </span>
+                    <!-- Character Counter (Max 10000 Chars) -->
+                    <span id="charCounter" class="text-xs font-mono px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-700 dark:text-emerald-300">
+                        0 / 10000
+                    </span>
+                </div>
+
+                <textarea id="sourceText" maxlength="10000" placeholder="請在此輸入或貼上文字 (最多10000字)..." 
+                    oninput="handleInputText()" 
+                    class="w-full h-48 md:h-64 p-3 rounded-xl input-bg border border-emerald-500/20 resize-none focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base leading-relaxed transition"></textarea>
+
+                <!-- Source Actions -->
+                <div class="mt-3 flex items-center justify-between pt-2 border-t border-emerald-500/10">
+                    <div class="flex items-center gap-1.5">
+                        <button id="micBtn" onclick="toggleSpeechRecognition()" class="p-2 rounded-lg hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 transition" title="錄音語音輸入">
+                            <i class="fa-solid fa-microphone text-base"></i>
+                        </button>
+                        <button onclick="speakText('source')" class="p-2 rounded-lg hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 transition" title="朗讀原文">
+                            <i class="fa-solid fa-volume-high text-base"></i>
+                        </button>
+                        <button onclick="clearSourceText()" class="p-2 rounded-lg hover:bg-red-500/20 text-red-500 transition" title="清除內容">
+                            <i class="fa-solid fa-trash-can text-base"></i>
+                        </button>
+                    </div>
+
+                    <button onclick="executeTranslation()" class="px-4 py-2 rounded-xl btn-primary text-sm font-semibold shadow-md flex items-center gap-2 active:scale-95 transition">
+                        <i class="fa-solid fa-language"></i> 立即翻譯
+                    </button>
+                </div>
+            </div>
+
+            <!-- Target Output Box -->
+            <div class="flex flex-col rounded-2xl card-bg border p-4 shadow-sm relative group">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs font-bold tracking-wider opacity-70 flex items-center gap-1.5">
+                        <i class="fa-solid fa-globe text-emerald-600"></i> 翻譯結果 (Translation)
+                    </span>
+                    <span id="translateStatus" class="text-xs font-medium text-emerald-600 dark:text-emerald-400 hidden flex items-center gap-1">
+                        <i class="fa-solid fa-spinner animate-spin"></i> <span id="translateStatusText">翻譯中...</span>
+                    </span>
+                </div>
+
+                <div id="targetTextContainer" class="w-full h-48 md:h-64 p-3 rounded-xl input-bg border border-emerald-500/20 overflow-y-auto text-base leading-relaxed whitespace-pre-wrap select-text">
+                    <span class="text-gray-400 italic font-light">翻譯結果將在此即時顯示...</span>
+                </div>
+
+                <!-- Target Actions -->
+                <div class="mt-3 flex items-center justify-between pt-2 border-t border-emerald-500/10">
+                    <div class="flex items-center gap-1.5">
+                        <button onclick="speakText('target')" class="p-2 rounded-lg hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 transition flex items-center gap-1 text-xs font-semibold" title="AI發音">
+                            <i class="fa-solid fa-circle-play text-base text-emerald-600"></i> AI發音
+                        </button>
+                        <button onclick="copyTargetText()" class="p-2 rounded-lg hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 transition" title="複製結果">
+                            <i class="fa-solid fa-copy text-base"></i>
+                        </button>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <button onclick="saveCurrentTranslationToHistory()" class="px-3 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-800 dark:text-amber-300 text-xs font-semibold transition flex items-center gap-1">
+                            <i class="fa-solid fa-bookmark"></i> 儲存歷史
+                        </button>
+                        <button onclick="openSaveToVaultModal()" class="px-3 py-1.5 rounded-xl bg-yellow-500/20 hover:bg-yellow-500/30 text-yellow-800 dark:text-yellow-300 text-xs font-semibold transition flex items-center gap-1">
+                            <i class="fa-solid fa-box-archive"></i> 儲存倉庫
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Modal: History Modal -->
+    <div id="historyModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="w-full max-w-3xl rounded-3xl card-bg border p-6 shadow-2xl flex flex-col max-h-[85vh]">
+            <div class="flex items-center justify-between pb-4 border-b border-emerald-500/20">
+                <h2 class="text-xl font-bold flex items-center gap-2">
+                    <i class="fa-solid fa-clock-rotate-left text-amber-500"></i> 歷史紀錄 (History)
+                </h2>
+                <button onclick="closeHistoryModal()" class="p-2 rounded-full hover:bg-gray-500/20">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <!-- Search & Clear Bar -->
+            <div class="my-4 flex flex-col sm:flex-row gap-2 justify-between items-center">
+                <div class="relative w-full sm:w-2/3">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-gray-400"></i>
+                    <input type="text" id="historySearchInput" oninput="renderHistoryList()" placeholder="搜尋歷史紀錄關鍵字..." class="w-full pl-9 pr-3 py-2 rounded-xl input-bg border border-emerald-500/20 text-sm focus:outline-none">
+                </div>
+                <button onclick="confirmClearAllHistory()" class="w-full sm:w-auto px-3 py-2 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-600 text-xs font-semibold transition">
+                    <i class="fa-solid fa-trash-can"></i> 清除全部歷史
+                </button>
+            </div>
+
+            <!-- Categorized History List Container -->
+            <div id="historyContainer" class="flex-grow overflow-y-auto pr-1 space-y-4">
+                <!-- Dynamic categories (Today, Yesterday, Specific Date) -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Vault / Repository Modal -->
+    <div id="vaultModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="w-full max-w-4xl rounded-3xl card-bg border p-6 shadow-2xl flex flex-col max-h-[88vh]">
+            <div class="flex items-center justify-between pb-4 border-b border-emerald-500/20">
+                <h2 class="text-xl font-bold flex items-center gap-2">
+                    <i class="fa-solid fa-folder-closed text-yellow-500"></i> 倉庫與資料夾管理 (Vault Repository)
+                </h2>
+                <button onclick="closeVaultModal()" class="p-2 rounded-full hover:bg-gray-500/20">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 my-4 flex-grow overflow-hidden">
+                <!-- Left: Folder Categories Sidebar -->
+                <div class="flex flex-col border-r border-emerald-500/20 pr-3">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-xs font-bold uppercase tracking-wider opacity-70">分類資料夾</span>
+                        <button onclick="promptCreateFolder()" class="px-2 py-1 rounded-lg bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700">
+                            + 新增資料夾
+                        </button>
+                    </div>
+                    <div id="folderListContainer" class="flex-grow overflow-y-auto space-y-1 pr-1">
+                        <!-- Dynamic Folder List -->
+                    </div>
+                </div>
+
+                <!-- Right: Folder Contents -->
+                <div class="md:col-span-2 flex flex-col pl-2 overflow-hidden">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 id="currentFolderName" class="font-bold text-base text-emerald-700 dark:text-emerald-300">
+                            預設資料夾
+                        </h3>
+                        <div class="flex gap-2">
+                            <button id="renameFolderBtn" onclick="promptRenameFolder()" class="px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-xs font-medium">
+                                重命名
+                            </button>
+                            <button id="deleteFolderBtn" onclick="promptDeleteCurrentFolder()" class="px-2.5 py-1 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-600 text-xs font-medium">
+                                刪除資料夾
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="vaultItemsContainer" class="flex-grow overflow-y-auto space-y-3 pr-1">
+                        <!-- Dynamic Vault Items -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Save Item to Vault Folder Select -->
+    <div id="saveToVaultModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="w-full max-w-md rounded-3xl card-bg border p-6 shadow-2xl">
+            <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+                <i class="fa-solid fa-box-archive text-yellow-500"></i> 選擇欲儲存的倉庫資料夾
+            </h3>
+            <select id="vaultFolderSelect" class="w-full p-3 rounded-xl input-bg border border-emerald-500/20 mb-6 text-sm font-medium">
+                <!-- Dynamic folders -->
+            </select>
+            <div class="flex justify-end gap-2">
+                <button onclick="closeSaveToVaultModal()" class="px-4 py-2 rounded-xl bg-gray-500/20 text-xs font-semibold">取消</button>
+                <button onclick="confirmSaveToVault()" class="px-4 py-2 rounded-xl btn-primary text-xs font-semibold">儲存至資料夾</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Camera Modal -->
+    <div id="cameraModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex flex-col items-center justify-center p-4">
+        <div class="w-full max-w-xl rounded-3xl card-bg border p-4 flex flex-col items-center relative">
+            <button onclick="closeCameraModal()" class="absolute right-4 top-4 p-2 rounded-full bg-black/40 text-white z-10">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+            <h3 class="text-base font-bold mb-3 flex items-center gap-2">
+                <i class="fa-solid fa-camera"></i> 拍照 OCR 辨識
+            </h3>
+            <video id="cameraVideo" autoplay playsinline class="w-full h-64 bg-black rounded-2xl object-cover mb-4"></video>
+            <canvas id="cameraCanvas" class="hidden"></canvas>
+            <button onclick="captureCameraPhoto()" class="px-6 py-3 rounded-2xl bg-emerald-600 text-white font-bold flex items-center gap-2 shadow-lg active:scale-95">
+                <i class="fa-solid fa-circle-dot text-lg"></i> 拍照並進行翻譯
+            </button>
+        </div>
+    </div>
+
+    <!-- Generic Custom Input Prompt Modal (Replaces window.prompt) -->
+    <div id="customPromptModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] hidden flex items-center justify-center p-4">
+        <div class="w-full max-w-md rounded-3xl card-bg border p-6 shadow-2xl">
+            <h3 id="customPromptTitle" class="text-lg font-bold mb-3 text-emerald-800 dark:text-emerald-200">請輸入內容</h3>
+            <input type="text" id="customPromptInput" class="w-full p-3 rounded-xl input-bg border border-emerald-500/20 mb-5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500">
+            <div class="flex justify-end gap-2">
+                <button id="customPromptCancelBtn" class="px-4 py-2 rounded-xl bg-gray-500/20 text-xs font-semibold">取消</button>
+                <button id="customPromptConfirmBtn" class="px-4 py-2 rounded-xl btn-primary text-xs font-semibold">確認</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Generic Custom Confirmation Modal (Replaces window.confirm) -->
+    <div id="customConfirmModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] hidden flex items-center justify-center p-4">
+        <div class="w-full max-w-md rounded-3xl card-bg border p-6 shadow-2xl">
+            <h3 id="customConfirmTitle" class="text-lg font-bold mb-2 text-emerald-800 dark:text-emerald-200">操作確認</h3>
+            <p id="customConfirmMessage" class="text-sm opacity-80 mb-6">您確定要執行此操作嗎？</p>
+            <div class="flex justify-end gap-2">
+                <button id="customConfirmCancelBtn" class="px-4 py-2 rounded-xl bg-gray-500/20 text-xs font-semibold">取消</button>
+                <button id="customConfirmOkBtn" class="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-semibold">確定執行</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5-Minute Eye-Care Overlay Notice (護眼模式) -->
+    <div id="eyeCareOverlay" class="fixed inset-0 z-[9999] hidden flex flex-col items-center justify-center bg-[#2D5A27] text-white p-6 transition-opacity duration-300 shadow-2xl">
+        <div class="text-center space-y-4 max-w-lg p-8 rounded-3xl bg-[#1E3F1A]/80 border border-[#3B7A57] backdrop-blur-md shadow-2xl">
+            <div class="w-20 h-20 mx-auto rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 text-4xl mb-2 animate-bounce">
+                <i class="fa-solid fa-eye"></i>
+            </div>
+            <h2 class="text-3xl font-extrabold text-blue-300 tracking-wide">護眼休息提醒</h2>
+            <p class="text-xl font-bold text-blue-200">
+                適度放鬆眼神，請稍等 <span id="eyeCareCountdown" class="text-3xl font-black text-blue-400 px-2 underline decoration-blue-400">3</span> 秒
+            </p>
+            <p class="text-xs text-green-200/80">
+                鷹眼翻譯關心您：建議看向遠方或眨眨眼，預防視力疲勞。
+            </p>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toastContainer" class="fixed bottom-6 right-6 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <script>
+        /* ==========================================================================
+           GLOBAL STATE & INITIALIZATION
+           ========================================================================== */
+        const GEMINI_API_KEY = ""; // Optional runtime injection
+        let currentThemeIndex = 0; // 0: Light, 1: Cactus/EyeCare, 2: Dark
+        const THEMES = ['theme-light', 'theme-cactus', 'theme-dark'];
+        const THEME_LABELS = ['淺色模式', '護眼配色', '深色模式'];
+
+        let historyItems = JSON.parse(localStorage.getItem('eagle_history') || '[]');
+        let vaultFolders = JSON.parse(localStorage.getItem('eagle_vault') || '{"自學範圍":[], "單純翻譯":[]}');
+        if (!vaultFolders["自學範圍"]) vaultFolders["自學範圍"] = [];
+        if (!vaultFolders["單純翻譯"]) vaultFolders["單純翻譯"] = [];
+        let selectedFolder = "自學範圍";
+
+        let autoTranslateTimer = null;
+        let eyeCareSecondsCount = 0;
+        let recognition = null;
+        let isRecording = false;
+
+        // Initialize App on DOM Load
+        window.addEventListener('DOMContentLoaded', () => {
+            if (window.pdfjsLib) {
+                pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+            }
+            initClock();
+            initTheme();
+            initEyeCareSystem();
+            initKeyboardShortcuts();
+            renderHistoryList();
+            renderVaultList();
+            setupSpeechRecognition();
+        });
+
+        /* ==========================================================================
+           KEYBOARD SHORTCUTS SYSTEM
+           ========================================================================== */
+        function initKeyboardShortcuts() {
+            window.addEventListener('keydown', (e) => {
+                const vaultModalOpen = !document.getElementById('vaultModal').classList.contains('hidden');
+
+                // Esc: Exit Vault / History / Modals
+                if (e.key === 'Escape') {
+                    closeHistoryModal();
+                    closeVaultModal();
+                    closeSaveToVaultModal();
+                    closeCameraModal();
+                    const promptModal = document.getElementById('customPromptModal');
+                    if (promptModal) promptModal.classList.add('hidden');
+                    const confirmModal = document.getElementById('customConfirmModal');
+                    if (confirmModal) confirmModal.classList.add('hidden');
+                    return;
+                }
+
+                // Ctrl + Enter: Edit folder name if Vault modal open, else Translate
+                if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                    e.preventDefault();
+                    if (vaultModalOpen) {
+                        promptRenameFolder();
+                    } else {
+                        executeTranslation();
+                        showToast("⚡ 快捷鍵：立即翻譯");
+                    }
+                    return;
+                }
+
+                // Parse digit 1~9 from key, Digit1~9, or Numpad1~9
+                let digit = null;
+                if (e.key >= '1' && e.key <= '9') {
+                    digit = parseInt(e.key, 10);
+                } else if (e.code && e.code.startsWith('Digit')) {
+                    const d = parseInt(e.code.replace('Digit', ''), 10);
+                    if (d >= 1 && d <= 9) digit = d;
+                } else if (e.code && e.code.startsWith('Numpad')) {
+                    const d = parseInt(e.code.replace('Numpad', ''), 10);
+                    if (d >= 1 && d <= 9) digit = d;
+                }
+
+                // Ctrl + Alt + 1~9 (or Alt + 1~9) Folder Switcher
+                const isCtrlAlt = (e.ctrlKey || e.metaKey) && e.altKey;
+                const isAltOnly = e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey;
+
+                if ((isCtrlAlt || isAltOnly) && digit !== null) {
+                    e.preventDefault();
+                    const folderNames = Object.keys(vaultFolders);
+                    const folderIndex = digit - 1;
+                    const targetFolder = folderNames[folderIndex];
+
+                    if (targetFolder) {
+                        selectedFolder = targetFolder;
+                        openVaultModal(); // Open vault modal so user sees folder switch immediately!
+                        renderVaultList();
+                        showToast(`📁 快捷鍵切換至資料夾「${targetFolder}」`);
+                    } else {
+                        showToast(`快捷鍵：不存在第 ${digit} 個資料夾`);
+                    }
+                    return;
+                }
+
+                // Alt + C: Copy Translation Result
+                if (e.altKey && (e.key === 'c' || e.key === 'C')) {
+                    e.preventDefault();
+                    copyTargetText();
+                    return;
+                }
+
+                // Alt + S: Speak Target Text
+                if (e.altKey && (e.key === 's' || e.key === 'S')) {
+                    e.preventDefault();
+                    speakText('target');
+                    return;
+                }
+            });
+        }
+
+        /* ==========================================================================
+           LIVE CLOCK & TIMESTAMP FUNCTIONS
+           ========================================================================== */
+        function initClock() {
+            updateClockDisplay();
+            setInterval(updateClockDisplay, 1000);
+        }
+
+        function updateClockDisplay() {
+            const now = new Date();
+
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+
+            const chineseStr = `${year}年${month}月${day}日 ${hours}:${minutes}:${seconds}`;
+            document.getElementById('clockChinese').innerText = chineseStr;
+
+            const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+            const monthName = monthNames[now.getMonth()];
+            
+            const getOrdinalSuffix = (d) => {
+                if (d > 3 && d < 21) return 'th';
+                switch (d % 10) {
+                    case 1:  return "st";
+                    case 2:  return "nd";
+                    case 3:  return "rd";
+                    default: return "th";
+                }
+            };
+            const ordinalDay = `${now.getDate()}${getOrdinalSuffix(now.getDate())}`;
+            const englishStr = `${year} ${monthName} ${ordinalDay} ${hours}:${minutes}:${seconds}`;
+            document.getElementById('clockEnglish').innerText = englishStr;
+        }
+
+        function getLocalDateString(d = new Date()) {
+            const yyyy = d.getFullYear();
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const dd = String(d.getDate()).padStart(2, '0');
+            return `${yyyy}-${mm}-${dd}`;
+        }
+
+        function getHighResMicrosecondTimestamp() {
+            const date = new Date();
+            const pad = (n, len = 2) => String(n).padStart(len, '0');
+
+            const yyyy = date.getFullYear();
+            const mm = pad(date.getMonth() + 1);
+            const dd = pad(date.getDate());
+            const hh = pad(date.getHours());
+            const min = pad(date.getMinutes());
+            const ss = pad(date.getSeconds());
+            const ms = pad(date.getMilliseconds(), 3);
+            
+            const usFraction = Math.floor((performance.now() % 1) * 1000);
+            const us = pad(usFraction, 3);
+
+            return `${yyyy}-${mm}-${dd} ${hh}:${min}:${ss}.${ms}${us}`;
+        }
+
+        /* ==========================================================================
+           TRANSLATION ENGINE & ISO MAPPER (UPDATED: SV, IT, ES, MI)
+           ========================================================================== */
+        
+        async function translateText(sourceText, srcLang, targetLangMode) {
+            if (!sourceText || !sourceText.trim()) return "";
+
+            if (GEMINI_API_KEY) {
+                try {
+                    const geminiResult = await callGeminiTranslation(sourceText, srcLang, targetLangMode);
+                    if (geminiResult && geminiResult.trim()) {
+                        return geminiResult.trim();
+                    }
+                } catch (err) {
+                    console.warn("Gemini API call failed, falling back to secondary engines:", err);
+                }
+            }
+
+            // Fallback Engine 1: Google GTX Single Endpoint
+            try {
+                const gtxLang = mapTargetToStandardISO(targetLangMode);
+                const gtxSrc = srcLang === 'auto' ? 'auto' : srcLang;
+                const gtxUrl = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${gtxSrc}&tl=${gtxLang}&dt=t&q=${encodeURIComponent(sourceText)}`;
+                const response = await fetch(gtxUrl);
+                const data = await response.json();
+                if (data && data[0]) {
+                    let rawResult = data[0].map(item => item[0]).join('');
+                    return postProcessTranslation(rawResult, targetLangMode);
+                }
+            } catch (e) {
+                console.warn("Fallback GTX failed:", e);
+            }
+
+            // Fallback Engine 2: MyMemory API
+            try {
+                const targetISO = mapTargetToStandardISO(targetLangMode);
+                const srcISO = srcLang === 'auto' ? 'en' : srcLang;
+                const pair = `${srcISO}|${targetISO}`;
+                const mymemUrl = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(sourceText)}&langpair=${pair}`;
+                const response = await fetch(mymemUrl);
+                const data = await response.json();
+                if (data && data.responseData && data.responseData.translatedText) {
+                    return postProcessTranslation(data.responseData.translatedText, targetLangMode);
+                }
+            } catch (e) {
+                console.warn("MyMemory API failed:", e);
+            }
+
+            return postProcessTranslation(sourceText, targetLangMode);
+        }
+
+        async function callGeminiTranslation(text, srcLang, targetLangMode) {
+            const systemPrompt = `You are Eagle Translate, an ultra-accurate AI translator.
+Translate the input text precisely according to the target mode:
+- "zh-TW-bj": Translate to Traditional Chinese using Standard Beijing Mandarin terminology and phrasing. MUST use Traditional Chinese characters (繁體字/正體字) ONLY. NEVER output Simplified Chinese characters (簡體字).
+- "en": Translate to standard natural English.
+- "ja": Translate to standard Japanese (Kanji and Kana mix).
+- "fr": Translate to natural French.
+- "ar": Translate to Standard Modern Arabic.
+- "sv": Translate to natural Swedish (Svenska).
+- "it": Translate to natural Italian (Italiano).
+- "es": Translate to natural Spanish (Español).
+- "mi": Translate to natural Te Reo Māori (Māori language).
+
+CRITICAL RULE: Return ONLY the raw translated result. ALWAYS use Traditional Chinese characters for Chinese output. Do NOT output conversational quotes or explanations.`;
+
+            const userContent = `Source Language: ${srcLang}\nTarget Mode: ${targetLangMode}\nText:\n${text}`;
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${GEMINI_API_KEY}`;
+            
+            const payload = {
+                contents: [{ parts: [{ text: userContent }] }],
+                systemInstruction: { parts: [{ text: systemPrompt }] },
+                generationConfig: { temperature: 0.1, maxOutputTokens: 8192 }
+            };
+
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);
+            const json = await res.json();
+            return json.candidates?.[0]?.content?.parts?.[0]?.text;
+        }
+
+        function mapTargetToStandardISO(targetMode) {
+            if (targetMode.startsWith('en')) return 'en';
+            if (targetMode.startsWith('ja')) return 'ja';
+            if (targetMode.startsWith('zh')) return 'zh-TW';
+            if (['fr', 'ar', 'sv', 'it', 'es', 'mi'].includes(targetMode)) return targetMode;
+            return 'en';
+        }
+
+        // Simplified to Traditional Chinese Character Converter
+        function convertToTraditionalChinese(str) {
+            if (!str) return "";
+            const simpToTrad = {
+                '国': '國', '国': '國', '体': '體', '繁': '繁', '译': '譯', '语': '語', '动': '動', '简': '簡',
+                '发': '發', '见': '見', '时': '時', '间': '間', '学': '學', '写': '寫', '听': '聽', '说': '說',
+                '读': '讀', '记': '記', '认': '認', '设': '設', '计': '計', '变': '變', '换': '換', '选': '選',
+                '择': '擇', '开': '開', '关': '關', '点': '點', '长': '長', '门': '門', '风': '風', '马': '馬',
+                '龙': '龍', '书': '書', '画': '畫', '话': '話', '电': '電', '机': '機', '车': '車', '网': '網',
+                '络': '絡', '资': '資', '讯': '訊', '料': '料', '爱': '愛', '宝': '寶', '贝': '貝', '买': '買',
+                '卖': '賣', '务': '務', '办': '辦', '公': '公', '处': '處', '备': '備', '复': '複', '统': '統',
+                '计': '計', '经': '經', '济': '濟', '产': '產', '品': '品', '标': '標', '准': '準', '确': '確'
+            };
+            return str.split('').map(ch => simpToTrad[ch] || ch).join('');
+        }
+
+        function postProcessTranslation(rawText, targetMode) {
+            if (!rawText) return "";
+            if (targetMode.startsWith('zh')) {
+                return convertToTraditionalChinese(rawText);
+            }
+            return rawText;
+        }
+
+        /* ==========================================================================
+           VOICE & MULTIMEDIA CAPABILITIES (ENHANCED OCR & HYBRID PDF)
+           ========================================================================== */
+        
+        // Map source language choice to Tesseract.js language codes
+        function getTesseractLangCode(srcLang) {
+            const langMap = {
+                'zh': 'chi_tra+chi_sim+eng',
+                'en': 'eng',
+                'ja': 'jpn+eng',
+                'fr': 'fra+eng',
+                'ar': 'ara+eng',
+                'sv': 'swe+eng',
+                'it': 'ita+eng',
+                'es': 'spa+eng',
+                'mi': 'mri+eng'
+            };
+            return langMap[srcLang] || 'chi_tra+eng';
+        }
+
+        // Image Canvas Preprocessing: Boost Contrast & Grayscale for better OCR accuracy
+        function preprocessImageCanvas(sourceInput) {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+
+            const width = sourceInput.width || sourceInput.videoWidth || 800;
+            const height = sourceInput.height || sourceInput.videoHeight || 600;
+
+            canvas.width = width;
+            canvas.height = height;
+            ctx.drawImage(sourceInput, 0, 0, width, height);
+
+            const imgData = ctx.getImageData(0, 0, width, height);
+            const data = imgData.data;
+
+            // Grayscale + Adaptive Contrast Boost
+            for (let i = 0; i < data.length; i += 4) {
+                const avg = (data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114);
+                // Contrast enhancement formula
+                const contrastFactor = 1.25;
+                const v = Math.min(255, Math.max(0, (avg - 128) * contrastFactor + 128));
+                data[i] = v;
+                data[i + 1] = v;
+                data[i + 2] = v;
+            }
+            ctx.putImageData(imgData, 0, 0);
+            return canvas;
+        }
+
+        // Core OCR Processing Engine (Supports Tesseract Logger Progress & Language Adaptation)
+        async function processImageOCR(imageSource, statusLabel = "圖片") {
+            const srcLang = document.getElementById('sourceLang')?.value || 'auto';
+            const langCode = getTesseractLangCode(srcLang);
+            const statusEl = document.getElementById('translateStatus');
+            const statusTextEl = document.getElementById('translateStatusText');
+
+            if (statusEl && statusTextEl) {
+                statusEl.classList.remove('hidden');
+                statusTextEl.innerText = `${statusLabel} OCR 辨識中...`;
+            }
+
+            let worker = null;
+            try {
+                // Preprocess image for maximum clarity
+                let processedCanvas = imageSource;
+                if (imageSource instanceof HTMLImageElement || imageSource instanceof HTMLVideoElement || imageSource instanceof HTMLCanvasElement) {
+                    processedCanvas = preprocessImageCanvas(imageSource);
+                }
+
+                worker = await Tesseract.createWorker(langCode.split('+'), 1, {
+                    logger: m => {
+                        if (m.status === 'recognizing text' && statusTextEl) {
+                            const pct = Math.round((m.progress || 0) * 100);
+                            statusTextEl.innerText = `${statusLabel} 辨識中 (${pct}%)...`;
+                        }
+                    }
+                });
+
+                const ret = await worker.recognize(processedCanvas);
+                return ret.data.text ? ret.data.text.trim() : "";
+            } catch (err) {
+                console.error("OCR Processing Error:", err);
+                return "";
+            } finally {
+                if (worker) await worker.terminate();
+                if (statusEl) statusEl.classList.add('hidden');
+            }
+        }
+
+        function setupSpeechRecognition() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRecognition) return;
+
+            recognition = new SpeechRecognition();
+            recognition.continuous = false;
+            recognition.interimResults = false;
+            recognition.lang = 'zh-TW';
+
+            recognition.onstart = () => {
+                isRecording = true;
+                const micBtn = document.getElementById('micBtn');
+                if (micBtn) micBtn.classList.add('text-red-500', 'animate-pulse');
+                showToast("🎤 正在聆聽中，請說話...");
+            };
+
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                const sourceEl = document.getElementById('sourceText');
+                if (sourceEl) {
+                    sourceEl.value += transcript;
+                    handleInputText();
+                }
+            };
+
+            recognition.onerror = () => {
+                showToast("語音辨識發生錯誤，請重新再試");
+            };
+
+            recognition.onend = () => {
+                isRecording = false;
+                const micBtn = document.getElementById('micBtn');
+                if (micBtn) micBtn.classList.remove('text-red-500', 'animate-pulse');
+            };
+        }
+
+        function toggleSpeechRecognition() {
+            if (!recognition) {
+                showToast("您的瀏覽器暫不支援 Web Speech 語音輸入");
+                return;
+            }
+            if (isRecording) {
+                recognition.stop();
+            } else {
+                recognition.start();
+            }
+        }
+
+        function swapLanguages() {
+            const srcSelect = document.getElementById('sourceLang');
+            const tgtSelect = document.getElementById('targetLang');
+            const srcText = document.getElementById('sourceText');
+            const tgtTextContainer = document.getElementById('targetTextContainer');
+
+            const currentSrc = srcSelect.value;
+            const currentTgt = tgtSelect.value;
+
+            // Map target mode back to simple source language ISO
+            const newSrc = mapTargetToStandardISO(currentTgt);
+            srcSelect.value = newSrc;
+
+            // Map old source language to target mode
+            let newTgtMode = 'en';
+            if (currentSrc === 'zh') newTgtMode = 'zh-TW-bj';
+            else if (['en', 'ja', 'fr', 'ar', 'sv', 'it', 'es', 'mi'].includes(currentSrc)) newTgtMode = currentSrc;
+
+            tgtSelect.value = newTgtMode;
+
+            const oldTgtText = tgtTextContainer.innerText;
+            if (oldTgtText && !oldTgtText.includes('翻譯結果將在此即時顯示')) {
+                srcText.value = oldTgtText;
+                executeTranslation();
+            }
+        }
+
+        function speakText(type) {
+            let text = "";
+            let rawLang = "zh";
+
+            if (type === 'source') {
+                text = document.getElementById('sourceText').value;
+                rawLang = document.getElementById('sourceLang').value;
+            } else {
+                text = document.getElementById('targetTextContainer').innerText;
+                rawLang = document.getElementById('targetLang').value;
+            }
+
+            if (!text || text.includes('翻譯結果將在此即時顯示')) {
+                showToast("沒有可朗讀的文字內容");
+                return;
+            }
+
+            let lang = 'zh-TW';
+            if (rawLang.startsWith('en')) lang = 'en-US';
+            else if (rawLang.startsWith('ja')) lang = 'ja-JP';
+            else if (rawLang.startsWith('zh')) lang = 'zh-TW';
+            else if (rawLang === 'fr') lang = 'fr-FR';
+            else if (rawLang === 'ar') lang = 'ar-SA';
+            else if (rawLang === 'sv') lang = 'sv-SE';
+            else if (rawLang === 'it') lang = 'it-IT';
+            else if (rawLang === 'es') lang = 'es-ES';
+            else if (rawLang === 'mi') lang = 'mi-NZ';
+
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = lang;
+            utterance.rate = 0.95;
+            window.speechSynthesis.speak(utterance);
+            showToast("🔊 正以自然 AI 發音朗讀中...");
+        }
+
+        /* Real-time Text Input & Translation Handlers */
+        function handleInputText() {
+            const inputEl = document.getElementById('sourceText');
+            const counterEl = document.getElementById('charCounter');
+            const val = inputEl ? inputEl.value : '';
+
+            if (counterEl) counterEl.innerText = `${val.length} / 10000`;
+
+            clearTimeout(autoTranslateTimer);
+            if (val.trim().length === 0) {
+                const container = document.getElementById('targetTextContainer');
+                if (container) container.innerHTML = '<span class="text-gray-400 italic font-light">翻譯結果將在此即時顯示...</span>';
+                return;
+            }
+
+            autoTranslateTimer = setTimeout(() => {
+                executeTranslation();
+            }, 400);
+        }
+
+        async function executeTranslation() {
+            const sourceText = document.getElementById('sourceText')?.value;
+            const srcLang = document.getElementById('sourceLang')?.value;
+            const targetLang = document.getElementById('targetLang')?.value;
+            const statusEl = document.getElementById('translateStatus');
+            const statusTextEl = document.getElementById('translateStatusText');
+            const outputContainer = document.getElementById('targetTextContainer');
+
+            if (!sourceText || !sourceText.trim()) return;
+
+            if (statusEl) statusEl.classList.remove('hidden');
+            if (statusTextEl) statusTextEl.innerText = '翻譯中...';
+
+            try {
+                const result = await translateText(sourceText, srcLang, targetLang);
+                if (outputContainer) outputContainer.innerText = result;
+
+                // Auto save directly to history upon completion
+                if (result && result.trim()) {
+                    autoSaveToHistory(sourceText.trim(), result.trim(), targetLang);
+                }
+            } catch (error) {
+                console.error("Translation exception:", error);
+                if (outputContainer) outputContainer.innerText = sourceText;
+            } finally {
+                if (statusEl) statusEl.classList.add('hidden');
+            }
+        }
+
+        function autoSaveToHistory(source, target, targetMode) {
+            if (!source || !target) return;
+            // Avoid adding identical duplicate entries in a row
+            if (historyItems.length > 0) {
+                const top = historyItems[0];
+                if (top.sourceText === source && top.targetText === target && top.targetMode === targetMode) {
+                    return;
+                }
+            }
+            const item = {
+                id: Date.now(),
+                timestamp: getHighResMicrosecondTimestamp(),
+                dateGroup: getLocalDateString(),
+                sourceText: source,
+                targetText: target,
+                targetMode: targetMode
+            };
+            historyItems.unshift(item);
+            localStorage.setItem('eagle_history', JSON.stringify(historyItems));
+            renderHistoryList();
+        }
+
+        function clearSourceText() {
+            const inputEl = document.getElementById('sourceText');
+            const counterEl = document.getElementById('charCounter');
+            const container = document.getElementById('targetTextContainer');
+            if (inputEl) inputEl.value = '';
+            if (counterEl) counterEl.innerText = '0 / 10000';
+            if (container) container.innerHTML = '<span class="text-gray-400 italic font-light">翻譯結果將在此即時顯示...</span>';
+        }
+
+        function handleTargetLangChange() {
+            const val = document.getElementById('sourceText')?.value;
+            if (val && val.trim()) {
+                executeTranslation();
+            }
+        }
+
+        // PDF Text Extraction & Scanned Canvas Hybrid Reader
+        function triggerPDFUpload() {
+            document.getElementById('pdfInput').click();
+        }
+
+        async function handlePDFUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            showToast("📄 開始解析 PDF 檔案...");
+            try {
+                const arrayBuffer = await file.arrayBuffer();
+                const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+                let fullText = "";
+                const maxPages = Math.min(pdf.numPages, 10); // Parse up to 10 pages
+
+                for (let i = 1; i <= maxPages; i++) {
+                    showToast(`📄 讀取中 (${i}/${maxPages} 頁)...`);
+                    const page = await pdf.getPage(i);
+                    const textContent = await page.getTextContent();
+                    let pageText = textContent.items.map(item => item.str).join(' ').trim();
+
+                    // If digital text extraction is empty (Scanned PDF), fallback to Canvas OCR!
+                    if (!pageText) {
+                        const viewport = page.getViewport({ scale: 1.5 });
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        canvas.width = viewport.width;
+                        canvas.height = viewport.height;
+                        
+                        await page.render({ canvasContext: ctx, viewport: viewport }).promise;
+                        pageText = await processImageOCR(canvas, `PDF 第 ${i} 頁`);
+                    }
+
+                    if (pageText) {
+                        fullText += (pdf.numPages > 1 ? `[第 ${i} 頁]\n` : "") + pageText + "\n\n";
+                    }
+                }
+
+                if (fullText.trim()) {
+                    document.getElementById('sourceText').value = fullText.trim().substring(0, 10000);
+                    handleInputText();
+                    showToast("✅ PDF 辨識成功！已帶入原文欄位");
+                } else {
+                    showToast("未能從該 PDF 辨識出文字");
+                }
+            } catch (err) {
+                console.error("PDF Read Error:", err);
+                showToast("PDF 讀取或辨識失敗");
+            }
+        }
+
+        // Image OCR Upload
+        function triggerImageUpload() {
+            document.getElementById('imageInput').click();
+        }
+
+        function triggerCamera() {
+            if (/Mobi|Android/i.test(navigator.userAgent)) {
+                document.getElementById('cameraInput').click();
+            } else {
+                openCameraModal();
+            }
+        }
+
+        async function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            showToast("🖼️ 正在處理圖片並進行高精度辨識...");
+            
+            // Create Image Element for Preprocessing
+            const img = new Image();
+            img.src = URL.createObjectURL(file);
+            await img.decode();
+
+            const text = await processImageOCR(img, "圖片");
+            URL.revokeObjectURL(img.src);
+
+            if (text) {
+                document.getElementById('sourceText').value = text.substring(0, 10000);
+                handleInputText();
+                showToast("✅ 圖片 OCR 辨識成功！");
+            } else {
+                showToast("未能辨識出文字");
+            }
+        }
+
+        let cameraStream = null;
+        async function openCameraModal() {
+            const modal = document.getElementById('cameraModal');
+            const video = document.getElementById('cameraVideo');
+            modal.classList.remove('hidden');
+
+            try {
+                cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+                video.srcObject = cameraStream;
+            } catch (err) {
+                showToast("無法存取視訊鏡頭");
+                closeCameraModal();
+            }
+        }
+
+        function closeCameraModal() {
+            if (cameraStream) {
+                cameraStream.getTracks().forEach(track => track.stop());
+            }
+            document.getElementById('cameraModal').classList.add('hidden');
+        }
+
+        async function captureCameraPhoto() {
+            const video = document.getElementById('cameraVideo');
+            const canvas = document.getElementById('cameraCanvas');
+            canvas.width = video.videoWidth || 640;
+            canvas.height = video.videoHeight || 480;
+
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            closeCameraModal();
+            showToast("📷 正在強化拍攝畫面並進行辨識...");
+
+            const text = await processImageOCR(canvas, "拍照畫面");
+            if (text) {
+                document.getElementById('sourceText').value = text.substring(0, 10000);
+                handleInputText();
+                showToast("✅ 拍照辨識成功！");
+            } else {
+                showToast("未能辨識出文字");
+            }
+        }
+
+        /* ==========================================================================
+           HISTORY & REPOSITORY MANAGEMENT
+           ========================================================================== */
+        
+        function saveCurrentTranslationToHistory() {
+            const source = document.getElementById('sourceText').value;
+            const target = document.getElementById('targetTextContainer').innerText;
+            const targetMode = document.getElementById('targetLang').value;
+
+            if (!source || !source.trim() || target.includes('翻譯結果將在此即時顯示')) {
+                showToast("沒有可儲存的翻譯內容");
+                return;
+            }
+
+            const item = {
+                id: Date.now(),
+                timestamp: getHighResMicrosecondTimestamp(),
+                dateGroup: getLocalDateString(),
+                sourceText: source,
+                targetText: target,
+                targetMode: targetMode
+            };
+
+            historyItems.unshift(item);
+            localStorage.setItem('eagle_history', JSON.stringify(historyItems));
+            renderHistoryList();
+            showToast("已成功儲存至歷史紀錄！");
+        }
+
+        function copyHistoryItem(id) {
+            const item = historyItems.find(i => i.id === id);
+            if (item) copyText(item.targetText);
+        }
+
+        function copyVaultItem(folder, index) {
+            if (vaultFolders[folder] && vaultFolders[folder][index]) {
+                copyText(vaultFolders[folder][index].targetText);
+            }
+        }
+
+        function renderHistoryList() {
+            const container = document.getElementById('historyContainer');
+            const searchKeyword = (document.getElementById('historySearchInput')?.value || '').toLowerCase();
+
+            if (historyItems.length === 0) {
+                container.innerHTML = '<div class="text-center py-8 opacity-60">尚無歷史紀錄</div>';
+                return;
+            }
+
+            const filtered = historyItems.filter(item => 
+                item.sourceText.toLowerCase().includes(searchKeyword) ||
+                item.targetText.toLowerCase().includes(searchKeyword)
+            );
+
+            if (filtered.length === 0) {
+                container.innerHTML = '<div class="text-center py-8 opacity-60">找不到符合搜尋條件的紀錄</div>';
+                return;
+            }
+
+            let html = `<div class="space-y-2">`;
+            filtered.forEach(item => {
+                html += `
+                    <div class="p-3 rounded-xl input-bg border border-emerald-500/10 flex flex-col gap-1 text-sm relative group">
+                        <div class="flex items-center justify-between text-xs opacity-70">
+                            <span class="font-mono text-emerald-600 dark:text-emerald-300 font-semibold">${item.timestamp}</span>
+                            <span class="px-2 py-0.5 rounded bg-emerald-500/10 font-sans">${escapeHtml(item.targetMode)}</span>
+                        </div>
+                        <div class="font-medium text-emerald-900 dark:text-emerald-100">${escapeHtml(item.sourceText)}</div>
+                        <div class="text-emerald-700 dark:text-emerald-300 font-sans border-t border-emerald-500/10 pt-1 mt-1">${escapeHtml(item.targetText)}</div>
+                        
+                        <div class="mt-2 flex justify-end gap-2">
+                            <button onclick="copyHistoryItem(${item.id})" class="text-xs px-2 py-1 rounded bg-emerald-500/10 hover:bg-emerald-500/20">
+                                <i class="fa-solid fa-copy"></i> 複製結果
+                            </button>
+                            <button onclick="deleteHistoryItem(${item.id})" class="text-xs px-2 py-1 rounded bg-red-500/10 text-red-600 hover:bg-red-500/20">
+                                <i class="fa-solid fa-trash-can"></i> 刪除
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+            html += `</div>`;
+
+            container.innerHTML = html;
+        }
+
+        function deleteHistoryItem(id) {
+            historyItems = historyItems.filter(item => item.id !== id);
+            localStorage.setItem('eagle_history', JSON.stringify(historyItems));
+            renderHistoryList();
+            showToast("歷史項目已刪除");
+        }
+
+        function confirmClearAllHistory() {
+            showConfirmModal("清除全歷史紀錄", "您確定要清空所有已儲存的翻譯歷史紀錄嗎？此動作無法復原。", () => {
+                historyItems = [];
+                localStorage.setItem('eagle_history', '[]');
+                renderHistoryList();
+                showToast("已清空所有歷史紀錄");
+            });
+        }
+
+        function openHistoryModal() {
+            renderHistoryList();
+            document.getElementById('historyModal').classList.remove('hidden');
+        }
+
+        function closeHistoryModal() {
+            document.getElementById('historyModal').classList.add('hidden');
+        }
+
+        /* Vault Functions */
+        function openVaultModal() {
+            renderVaultList();
+            document.getElementById('vaultModal').classList.remove('hidden');
+        }
+
+        function closeVaultModal() {
+            document.getElementById('vaultModal').classList.add('hidden');
+        }
+
+        function renderVaultList() {
+            const folderContainer = document.getElementById('folderListContainer');
+            const itemsContainer = document.getElementById('vaultItemsContainer');
+            const folderTitle = document.getElementById('currentFolderName');
+
+            const folderNames = Object.keys(vaultFolders);
+            if (folderNames.length === 0) {
+                vaultFolders["自學範圍"] = [];
+                vaultFolders["單純翻譯"] = [];
+                selectedFolder = "自學範圍";
+            } else if (!vaultFolders[selectedFolder]) {
+                selectedFolder = folderNames[0];
+            }
+
+            let folderHtml = "";
+            folderNames.forEach((folderName, idx) => {
+                const isSelected = folderName === selectedFolder;
+                folderHtml += `
+                    <button type="button" onclick="selectFolderByIndex(${idx})" class="w-full text-left p-2.5 rounded-xl text-sm font-medium transition flex items-center justify-between ${isSelected ? 'bg-emerald-600 text-white shadow-sm' : 'hover:bg-emerald-500/10'}">
+                        <span class="truncate"><i class="fa-solid fa-folder${isSelected ? '-open' : ''} mr-2"></i>${escapeHtml(folderName)}</span>
+                        <span class="text-xs opacity-75 px-1.5 py-0.5 rounded ${isSelected ? 'bg-white/20' : 'bg-emerald-500/10'}">${vaultFolders[folderName].length}</span>
+                    </button>
+                `;
+            });
+            folderContainer.innerHTML = folderHtml;
+
+            folderTitle.innerText = selectedFolder;
+            const items = vaultFolders[selectedFolder] || [];
+
+            if (items.length === 0) {
+                itemsContainer.innerHTML = '<div class="text-center py-10 opacity-60">此資料夾為空</div>';
+                return;
+            }
+
+            let itemsHtml = "";
+            items.forEach((item, index) => {
+                itemsHtml += `
+                    <div class="p-3.5 rounded-2xl input-bg border border-emerald-500/20 flex flex-col gap-1.5 text-sm">
+                        <div class="flex items-center justify-between text-xs opacity-75">
+                            <span class="font-mono">${item.timestamp}</span>
+                            <span class="font-bold text-emerald-600">${escapeHtml(item.targetMode)}</span>
+                        </div>
+                        <div class="font-semibold text-emerald-900 dark:text-emerald-100">${escapeHtml(item.sourceText)}</div>
+                        <div class="text-emerald-700 dark:text-emerald-300 border-t border-emerald-500/10 pt-1.5">${escapeHtml(item.targetText)}</div>
+                        <div class="flex justify-end gap-2 mt-1">
+                            <button type="button" onclick="copyVaultItemByIndex(${index})" class="text-xs px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20">
+                                複製
+                            </button>
+                            <button type="button" onclick="deleteVaultItemByIndex(${index})" class="text-xs px-2.5 py-1 rounded-lg bg-red-500/10 text-red-600 hover:bg-red-500/20">
+                                移除
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+            itemsContainer.innerHTML = itemsHtml;
+        }
+
+        function selectFolderByIndex(index) {
+            const folderNames = Object.keys(vaultFolders);
+            if (folderNames[index]) {
+                selectedFolder = folderNames[index];
+                renderVaultList();
+                showToast(`📁 已切換至資料夾「${selectedFolder}」`);
+            }
+        }
+
+        function copyVaultItemByIndex(index) {
+            if (vaultFolders[selectedFolder] && vaultFolders[selectedFolder][index]) {
+                copyText(vaultFolders[selectedFolder][index].targetText);
+            }
+        }
+
+        function deleteVaultItemByIndex(index) {
+            if (vaultFolders[selectedFolder]) {
+                vaultFolders[selectedFolder].splice(index, 1);
+                saveVaultToStorage();
+                renderVaultList();
+                showToast("已自倉庫移除該項目");
+            }
+        }
+
+        function promptCreateFolder() {
+            showPromptModal("建立新資料夾", "", (name) => {
+                if (name && name.trim()) {
+                    const cleanName = name.trim();
+                    if (!vaultFolders[cleanName]) {
+                        vaultFolders[cleanName] = [];
+                        saveVaultToStorage();
+                        selectedFolder = cleanName;
+                        renderVaultList();
+                        showToast(`已建立資料夾「${cleanName}」`);
+                    } else {
+                        showToast("資料夾名稱已存在");
+                    }
+                }
+            });
+        }
+
+        function promptRenameFolder() {
+            showPromptModal(`重新命名資料夾「${selectedFolder}」`, selectedFolder, (newName) => {
+                if (newName && newName.trim() && newName.trim() !== selectedFolder) {
+                    const cleanName = newName.trim();
+                    if (vaultFolders[cleanName]) {
+                        showToast("資料夾名稱已存在");
+                        return;
+                    }
+                    vaultFolders[cleanName] = vaultFolders[selectedFolder];
+                    delete vaultFolders[selectedFolder];
+                    selectedFolder = cleanName;
+                    saveVaultToStorage();
+                    renderVaultList();
+                    showToast("資料夾名稱更新成功");
+                }
+            });
+        }
+
+        function promptDeleteCurrentFolder() {
+            showConfirmModal("刪除資料夾", `確定要刪除資料夾「${selectedFolder}」及其內部所有項目嗎？`, (confirmed) => {
+                if (confirmed) {
+                    delete vaultFolders[selectedFolder];
+                    selectedFolder = Object.keys(vaultFolders)[0] || "自學範圍";
+                    saveVaultToStorage();
+                    renderVaultList();
+                    showToast("資料夾已刪除");
+                }
+            });
+        }
+
+        function deleteVaultItem(folder, index) {
+            if (vaultFolders[folder]) {
+                vaultFolders[folder].splice(index, 1);
+                saveVaultToStorage();
+                renderVaultList();
+                showToast("已自倉庫移除該項目");
+            }
+        }
+
+        function openSaveToVaultModal() {
+            const source = document.getElementById('sourceText').value;
+            const target = document.getElementById('targetTextContainer').innerText;
+
+            if (!source || !source.trim() || target.includes('翻譯結果將在此即時顯示')) {
+                showToast("沒有可儲存的翻譯內容");
+                return;
+            }
+
+            const select = document.getElementById('vaultFolderSelect');
+            select.innerHTML = Object.keys(vaultFolders)
+                .map(f => `<option value="${escapeHtml(f)}">${escapeHtml(f)}</option>`).join('');
+
+            document.getElementById('saveToVaultModal').classList.remove('hidden');
+        }
+
+        function closeSaveToVaultModal() {
+            document.getElementById('saveToVaultModal').classList.add('hidden');
+        }
+
+        function confirmSaveToVault() {
+            const folder = document.getElementById('vaultFolderSelect').value;
+            const source = document.getElementById('sourceText').value;
+            const target = document.getElementById('targetTextContainer').innerText;
+            const targetMode = document.getElementById('targetLang').value;
+
+            if (!vaultFolders[folder]) vaultFolders[folder] = [];
+
+            vaultFolders[folder].unshift({
+                timestamp: getHighResMicrosecondTimestamp(),
+                sourceText: source,
+                targetText: target,
+                targetMode: targetMode
+            });
+
+            saveVaultToStorage();
+            closeSaveToVaultModal();
+            showToast(`已儲存至倉庫資料夾「${folder}」`);
+        }
+
+        function saveVaultToStorage() {
+            localStorage.setItem('eagle_vault', JSON.stringify(vaultFolders));
+        }
+
+        /* ==========================================================================
+           CUSTOM PROMPT & CONFIRM MODAL DIALOGS (REPLACES ALERT/CONFIRM/PROMPT)
+           ========================================================================== */
+        
+        function showPromptModal(title, defaultValue, callback) {
+            const modal = document.getElementById('customPromptModal');
+            const titleEl = document.getElementById('customPromptTitle');
+            const inputEl = document.getElementById('customPromptInput');
+            const confirmBtn = document.getElementById('customPromptConfirmBtn');
+            const cancelBtn = document.getElementById('customPromptCancelBtn');
+
+            titleEl.innerText = title;
+            inputEl.value = defaultValue || '';
+            modal.classList.remove('hidden');
+            inputEl.focus();
+
+            const cleanup = () => {
+                modal.classList.add('hidden');
+                confirmBtn.onclick = null;
+                cancelBtn.onclick = null;
+            };
+
+            confirmBtn.onclick = () => {
+                const val = inputEl.value;
+                cleanup();
+                callback(val);
+            };
+
+            cancelBtn.onclick = () => {
+                cleanup();
+                callback(null);
+            };
+        }
+
+        function showConfirmModal(title, message, callback) {
+            const modal = document.getElementById('customConfirmModal');
+            const titleEl = document.getElementById('customConfirmTitle');
+            const msgEl = document.getElementById('customConfirmMessage');
+            const okBtn = document.getElementById('customConfirmOkBtn');
+            const cancelBtn = document.getElementById('customConfirmCancelBtn');
+
+            titleEl.innerText = title;
+            msgEl.innerText = message;
+            modal.classList.remove('hidden');
+
+            const cleanup = () => {
+                modal.classList.add('hidden');
+                okBtn.onclick = null;
+                cancelBtn.onclick = null;
+            };
+
+            okBtn.onclick = () => {
+                cleanup();
+                callback(true);
+            };
+
+            cancelBtn.onclick = () => {
+                cleanup();
+                callback(false);
+            };
+        }
+
+        /* ==========================================================================
+           5-MINUTE EYE-CARE SYSTEM & THEMES
+           ========================================================================== */
+        
+        function initEyeCareSystem() {
+            updateEyeCareBadgeDisplay();
+            setInterval(() => {
+                eyeCareSecondsCount++;
+                updateEyeCareBadgeDisplay();
+
+                // 5 minutes = 300 seconds
+                if (eyeCareSecondsCount >= 300) {
+                    trigger3SecondEyeCareNotice();
+                    eyeCareSecondsCount = 0;
+                }
+            }, 1000);
+        }
+
+        function updateEyeCareBadgeDisplay() {
+            const badge = document.getElementById('eyeCareBadge');
+            if (!badge) return;
+
+            const remainingSeconds = Math.max(0, 300 - eyeCareSecondsCount);
+            const mins = String(Math.floor(remainingSeconds / 60)).padStart(2, '0');
+            const secs = String(remainingSeconds % 60).padStart(2, '0');
+            badge.innerText = `${mins}:${secs}`;
+        }
+
+        function trigger3SecondEyeCareNotice() {
+            const overlay = document.getElementById('eyeCareOverlay');
+            const countdownEl = document.getElementById('eyeCareCountdown');
+
+            overlay.classList.remove('hidden');
+            let count = 3;
+            countdownEl.innerText = count;
+
+            const countdownInterval = setInterval(() => {
+                count--;
+                if (count > 0) {
+                    countdownEl.innerText = count;
+                } else {
+                    clearInterval(countdownInterval);
+                    overlay.classList.add('hidden');
+                }
+            }, 1000);
+        }
+
+        function cycleTheme() {
+            const body = document.body;
+            body.classList.remove(THEMES[currentThemeIndex]);
+
+            currentThemeIndex = (currentThemeIndex + 1) % THEMES.length;
+
+            body.classList.add(THEMES[currentThemeIndex]);
+            document.getElementById('themeBtnText').innerText = THEME_LABELS[currentThemeIndex];
+            localStorage.setItem('eagle_theme_index', currentThemeIndex);
+            showToast(`已切換模式：${THEME_LABELS[currentThemeIndex]}`);
+        }
+
+        function initTheme() {
+            const savedIndex = localStorage.getItem('eagle_theme_index');
+            if (savedIndex !== null) {
+                currentThemeIndex = parseInt(savedIndex, 10) || 0;
+            }
+            document.body.classList.add(THEMES[currentThemeIndex]);
+            document.getElementById('themeBtnText').innerText = THEME_LABELS[currentThemeIndex];
+        }
+
+        /* ==========================================================================
+           UTILITY FUNCTIONS
+           ========================================================================== */
+        function copyTargetText() {
+            const text = document.getElementById('targetTextContainer').innerText;
+            if (!text || text.includes('翻譯結果將在此即時顯示')) {
+                showToast("暫無翻譯結果可供複製");
+                return;
+            }
+            copyText(text);
+        }
+
+        function copyText(text) {
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(text).then(() => {
+                    showToast("📋 已成功複製至剪貼簿！");
+                }).catch(() => {
+                    fallbackCopyText(text);
+                });
+            } else {
+                fallbackCopyText(text);
+            }
+        }
+
+        function fallbackCopyText(text) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+            showToast("📋 已成功複製至剪貼簿！");
+        }
+
+        function showToast(message) {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = 'px-4 py-3 rounded-2xl bg-emerald-900 text-emerald-100 border border-emerald-400/30 shadow-xl text-sm font-semibold flex items-center gap-2 toast-animate pointer-events-auto';
+            toast.innerHTML = `<i class="fa-solid fa-circle-info text-emerald-400"></i> ${escapeHtml(message)}`;
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                if (toast.parentNode) toast.parentNode.removeChild(toast);
+            }, 2600);
+        }
+
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobileMenu');
+            menu.classList.toggle('hidden');
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+    </script>
+</body>
+</html>
